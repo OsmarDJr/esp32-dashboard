@@ -74,7 +74,9 @@
   }
 
   const script = document.createElement('script');
-  script.src = 'https://script.google.com/macros/s/AKfycbyKfZ-WpIodvj5ti2XxfsDiYlbgUNa_CSGbQ9nM9UfjWnfAMmRvIZ0_6KZRl83JM5XYjw/exec?callback=carregarDados&_=' + new Date().getTime();
+  //script.src = 'https://script.google.com/macros/s/AKfycbyKfZ-WpIodvj5ti2XxfsDiYlbgUNa_CSGbQ9nM9UfjWnfAMmRvIZ0_6KZRl83JM5XYjw/exec?callback=carregarDados&_=' + new Date().getTime();
+  script.src = 'https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec?callback=carregarDados';
+
   script.onerror = () => {
     document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
   };
