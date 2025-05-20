@@ -75,9 +75,9 @@
 
   const script = document.createElement('script');
   script.src = 'https://script.google.com/macros/s/AKfycbyKfZ-WpIodvj5ti2XxfsDiYlbgUNa_CSGbQ9nM9UfjWnfAMmRvIZ0_6KZRl83JM5XYjw/exec?callback=carregarDados&_=' + new Date().getTime();
-  //script.onerror = () => {
-   // document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
-  //};
+  script.onerror = () => {
+    document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
+  };
   document.body.appendChild(script);
 </script>
 
