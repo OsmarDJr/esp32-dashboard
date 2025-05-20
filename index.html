@@ -53,35 +53,34 @@
 
   <div class="error" id="erro"></div>
 
-  <script>
-    // Função de callback usada no JSONP
-    function carregarDados(dados) {
-      const tbody = document.querySelector("#dados tbody");
+<script>
+  function carregarDados(dados) {
+    const tbody = document.querySelector("#dados tbody");
 
-      if (!Array.isArray(dados) || dados.length === 0) {
-        document.getElementById("erro").textContent = "Nenhum dado encontrado na planilha.";
-        return;
-      }
-
-      dados.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.data || ''}</td>
-          <td>${row.temperatura || ''}</td>
-          <td>${row.umidade || ''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    if (!Array.isArray(dados) || dados.length === 0) {
+      document.getElementById("erro").textContent = "Nenhum dado encontrado na planilha.";
+      return;
     }
 
-    // Adiciona o script JSONP dinamicamente
-    const script = document.createElement('script');
-    script.src = 'https://script.google.com/macros/s/AKfycbyKfZ-WpIodvj5ti2XxfsDiYlbgUNa_CSGbQ9nM9UfjWnfAMmRvIZ0_6KZRl83JM5XYjw/exec?callback=carregarDados';
-    script.onerror = () => {
-      document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
-    };
-    document.body.appendChild(script);
-  </script>
+    dados.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.data || ''}</td>
+        <td>${row.temperatura || ''}</td>
+        <td>${row.umidade || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const script = document.createElement('script');
+  script.src = 'https://script.google.com/macros/s/AKfycbyKfZ-WpIodvj5ti2XxfsDiYlbgUNa_CSGbQ9nM9UfjWnfAMmRvIZ0_6KZRl83JM5XYjw/exec?callback=carregarDados&_=' + new Date().getTime();
+  script.onerror = () => {
+    document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
+  };
+  document.body.appendChild(script);
+</script>
+
 
 </body>
 </html>
