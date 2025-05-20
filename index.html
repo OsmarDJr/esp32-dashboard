@@ -36,7 +36,7 @@
     google.charts.setOnLoadCallback(carregarDados);
 
     function carregarDados() {
-      fetch('https://script.google.com/macros/s/AKfycbw_AX07JT9SMyil3hqILQ9doxDPnQFybV46vD7pradbuSyYY-TSXZZAtFlH2nlmXMN7xA/exec')
+      fetch('https://script.google.com/macros/s/AKfycbxqErOsNo88wOoRy4oYTsvpEN3wfwi3VqpI6-VQBbFD4lmxlYyEQ2UWjoo9EY4bjfGNww/exec')
         .then(response => response.json())
         .then(data => {
           atualizarTabela(data);
