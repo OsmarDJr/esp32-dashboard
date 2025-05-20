@@ -3,35 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard ESP32</title>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f2f5;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      margin-top: 20px;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    th {
-      background-color: #f5f5f5;
-    }
-    .error {
-      color: red;
-      text-align: center;
-      margin-top: 20px;
-    }
+    body { font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #f5f5f5; }
+    .error { color: red; text-align: center; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -49,12 +28,26 @@
     <tbody></tbody>
   </table>
 
+  <div id="chart_div" style="width: 100%; height: 500px;"></div>
   <div class="error" id="erro"></div>
 
   <script>
-    function carregarDados(dados) {
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(carregarDados);
+
+    function carregarDados() {
+      fetch('https://script.google.com/macros/s/AKfycbw_AX07JT9SMyil3hqILQ9doxDPnQFybV46vD7pradbuSyYY-TSXZZAtFlH2nlmXMN7xA/exec')
+        .then(response => response.json())
+        .then(data => {
+          atualizarTabela(data);
+          desenharGrafico(data);
+        })
+        .catch(error => document.getElementById("erro").textContent = "Erro ao carregar dados.");
+    }
+
+    function atualizarTabela(dados) {
       const tbody = document.querySelector("#dados tbody");
-      tbody.innerHTML = ""; // Limpa a tabela antes de inserir novos dados
+      tbody.innerHTML = "";
 
       if (!Array.isArray(dados) || dados.length === 0) {
         document.getElementById("erro").textContent = "Nenhum dado encontrado.";
@@ -63,26 +56,27 @@
 
       dados.slice(-100).forEach(row => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.data || '---'}</td>
-          <td>${row.temperatura ? parseFloat(row.temperatura).toFixed(1) : '---'}</td>
-          <td>${row.umidade ? parseFloat(row.umidade).toFixed(1) : '---'}</td>
-        `;
+        tr.innerHTML = `<td>${row.data || '---'}</td><td>${row.temperatura || '---'}</td><td>${row.umidade || '---'}</td>`;
         tbody.appendChild(tr);
       });
     }
 
-    function carregarDadosViaFetch() {
-      fetch('https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec')
-        .then(response => response.json())
-        .then(data => carregarDados(data))
-        .catch(() => {
-          document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
-        });
+    function desenharGrafico(dados) {
+      if (!Array.isArray(dados) || dados.length === 0) return;
+
+      let dadosGrafico = [['Data', 'Temperatura', 'Umidade']];
+      dados.slice(-100).forEach(row => {
+        dadosGrafico.push([row.data, parseFloat(row.temperatura), parseFloat(row.umidade)]);
+      });
+
+      let dataTable = google.visualization.arrayToDataTable(dadosGrafico);
+      let options = { title: 'Últimas 100 Leituras', curveType: 'function', legend: { position: 'bottom' } };
+      let chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+      chart.draw(dataTable, options);
     }
 
-    carregarDadosViaFetch();
-    setInterval(carregarDadosViaFetch, 60000); // Atualiza a cada 60 segundos
+    carregarDados();
+    setInterval(carregarDados, 60000);
   </script>
 
 </body>
