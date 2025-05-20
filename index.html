@@ -2,38 +2,54 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard ESP32 - Temperatura e Umidade</title>
+  <title>Dashboard ESP32</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
+      background: #f4f4f4;
     }
-    canvas {
-      max-width: 1000px;
-      margin: auto;
+    h1 {
+      color: #333;
+    }
+    #grafico {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
-  <h1>Últimas Leituras - ESP32</h1>
-  <canvas id="grafico" width="1000" height="500"></canvas>
+
+  <h1>Dashboard - ESP32</h1>
+  <canvas id="grafico" width="800" height="400"></canvas>
 
   <script>
     function callback(data) {
-      // Limita para as últimas 100 entradas
+      console.log("Dados recebidos:", data);
+
+      if (!data || data.length === 0) {
+        document.getElementById('grafico').outerHTML = "<p>Nenhum dado disponível.</p>";
+        return;
+      }
+
       const ultimos = data.slice(-100);
 
       const labels = ultimos.map(item => {
         const d = new Date(item.data);
-        return d.toLocaleString("pt-BR");
+        return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       });
 
       const temperaturas = ultimos.map(item => parseFloat(item.temperatura));
       const umidades = ultimos.map(item => parseFloat(item.umidade));
 
       const ctx = document.getElementById('grafico').getContext('2d');
+
       new Chart(ctx, {
         type: 'line',
         data: {
@@ -42,48 +58,45 @@
             {
               label: 'Temperatura (°C)',
               data: temperaturas,
-              borderColor: 'red',
-              backgroundColor: 'rgba(255,0,0,0.1)',
-              fill: true,
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              fill: false,
               tension: 0.2
             },
             {
               label: 'Umidade (%)',
               data: umidades,
-              borderColor: 'blue',
-              backgroundColor: 'rgba(0,0,255,0.1)',
-              fill: true,
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              fill: false,
               tension: 0.2
             }
           ]
         },
         options: {
           responsive: true,
-          plugins: {
-            legend: {
-              position: 'top'
-            },
-            title: {
-              display: true,
-              text: 'Temperatura e Umidade (últimas 100 leituras)'
-            }
-          },
           scales: {
             x: {
-              ticks: {
-                maxRotation: 90,
-                minRotation: 45
+              title: {
+                display: true,
+                text: 'Horário'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Valor'
               }
             }
           }
         }
       });
     }
-
-    // Carrega dados do Google Apps Script via JSONP
-    const script = document.createElement('script');
-    script.src = "https://script.google.com/macros/s/AKfycbxqErOsNo88wOoRy4oYTsvpEN3wfwi3VqpI6-VQBbFD4lmxlYyEQ2UWjoo9EY4bjfGNww/exec?callback=callback";
-    document.body.appendChild(script);
   </script>
+
+  <!-- Substitua esta URL pelo SEU Google Apps Script publicado como Web App -->
+  <script src="https://script.google.com/macros/s/AKfycbxqErOsNo88wOoRy4oYTsvpEN3wfwi3VqpI6-VQBbFD4lmxlYyEQ2UWjoo9EY4bjfGNww/exec?callback=callback"></script>
+
 </body>
 </html>
