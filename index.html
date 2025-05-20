@@ -51,3 +51,118 @@
 
   <table id="dados">
     <thead>
+      <tr>
+        <th>Data</th>
+        <th>Temperatura (°C)</th>
+        <th>Umidade (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Dados serão inseridos aqui -->
+    </tbody>
+  </table>
+
+  <div class="error" id="erro"></div>
+
+  <script>
+    // Função para formatar datas vindas da planilha
+    function formatarData(dataRaw) {
+      if (typeof dataRaw === "number") {
+        const utc_days = Math.floor(dataRaw - 25569);
+        const utc_value = utc_days * 86400;                                        
+        const date_info = new Date(utc_value * 1000);
+        date_info.setHours(date_info.getHours() - 3); // Ajuste para GMT-3
+
+        return date_info.toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false
+        });
+      }
+
+      if (typeof dataRaw === "string") {
+        const dateObj = new Date(dataRaw);
+        if (!isNaN(dateObj)) {
+          return dateObj.toLocaleString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+          });
+        }
+      }
+
+      return dataRaw;
+    }
+
+    function carregarDados(dados) {
+      const tbody = document.querySelector("#dados tbody");
+      const erro = document.getElementById("erro");
+      const labels = [];
+      const temperaturas = [];
+
+      if (!Array.isArray(dados) || dados.length === 0) {
+        erro.textContent = "Nenhum dado encontrado na planilha.";
+        return;
+      }
+
+      const ultimos = dados.slice(-100);
+
+      ultimos.forEach(row => {
+        const dataFormatada = formatarData(row.data);
+        labels.push(dataFormatada);
+        temperaturas.push(Number(row.temperatura) || 0);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${dataFormatada}</td>
+          <td>${row.temperatura || ''}</td>
+          <td>${row.umidade || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const ctx = document.getElementById('grafico').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Temperatura (°C)',
+            data: temperaturas,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                maxRotation: 90,
+                minRotation: 45,
+                autoSkip: true,
+                maxTicksLimit: 15
+              }
+            },
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+
+    // Adiciona script JSONP
+    const script = document.createElement('script');
+    script.src = 'https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec?callback=carregarDados';
+    script.onerror = () => {
+      document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
+    };
+    document.body.appendChild(script);
+  </script>
+
+</body>
+</html>
