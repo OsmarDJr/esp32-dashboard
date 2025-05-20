@@ -1,44 +1,47 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Monitoramento ESP32</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Dashboard ESP32</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      background-color: #f0f2f5;
+      padding: 20px;
     }
     h1 {
-      color: #007bff;
-    }
-    #erro {
-      color: red;
+      text-align: center;
+      color: #333;
     }
     table {
       width: 100%;
       border-collapse: collapse;
+      background: #fff;
       margin-top: 20px;
     }
     th, td {
-      padding: 8px;
-      border: 1px solid #ddd;
+      padding: 10px;
+      border: 1px solid #ccc;
       text-align: center;
     }
-    canvas {
-      margin-top: 30px;
-      max-width: 100%;
+    th {
+      background-color: #f5f5f5;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
+
   <h1>Leituras do ESP32</h1>
-  <p id="erro"></p>
-  <table id="tabela">
+
+  <table id="dados">
     <thead>
       <tr>
-        <th>Horário</th>
+        <th>Data</th>
         <th>Temperatura (°C)</th>
         <th>Umidade (%)</th>
       </tr>
@@ -46,75 +49,41 @@
     <tbody></tbody>
   </table>
 
-  <canvas id="grafico"></canvas>
+  <div class="error" id="erro"></div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwdNwALkMosrp0dWLGptvnEzQkJrwWMJ_ljJcgy9ob5CekYttRxb82AAUndtQn25mLL/exec";
+    function carregarDados(dados) {
+      const tbody = document.querySelector("#dados tbody");
+      tbody.innerHTML = ""; // Limpa a tabela antes de inserir novos dados
 
-    fetch(scriptURL)
-      .then(response => response.json())
-      .then(data => {
-        const tabela = document.querySelector("#tabela tbody");
-        const labels = [];
-        const temp = [];
-        const umi = [];
+      if (!Array.isArray(dados) || dados.length === 0) {
+        document.getElementById("erro").textContent = "Nenhum dado encontrado.";
+        return;
+      }
 
-        data.slice(-100).forEach((linha, index) => {
-          const horario = new Date(linha.data).toLocaleString("pt-BR", {
-            hour12: false,
-            timeZone: "America/Sao_Paulo"
-          });
-
-          const row = document.createElement("tr");
-          row.innerHTML = `<td>${horario}</td><td>${linha.temperatura}</td><td>${linha.umidade}</td>`;
-          tabela.appendChild(row);
-
-          labels.push(horario);
-          temp.push(parseFloat(linha.temperatura));
-          umi.push(parseFloat(linha.umidade));
-        });
-
-        const ctx = document.getElementById("grafico").getContext("2d");
-        new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: "Temperatura (°C)",
-                data: temp,
-                borderColor: "red",
-                backgroundColor: "rgba(255, 0, 0, 0.1)",
-                fill: true
-              },
-              {
-                label: "Umidade (%)",
-                data: umi,
-                borderColor: "blue",
-                backgroundColor: "rgba(0, 0, 255, 0.1)",
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: false
-              },
-              x: {
-                ticks: {
-                  autoSkip: true,
-                  maxTicksLimit: 12
-                }
-              }
-            }
-          }
-        });
-      })
-      .catch(() => {
-        document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
+      dados.slice(-100).forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.data || '---'}</td>
+          <td>${row.temperatura ? parseFloat(row.temperatura).toFixed(1) : '---'}</td>
+          <td>${row.umidade ? parseFloat(row.umidade).toFixed(1) : '---'}</td>
+        `;
+        tbody.appendChild(tr);
       });
+    }
+
+    function carregarDadosViaFetch() {
+      fetch('https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec')
+        .then(response => response.json())
+        .then(data => carregarDados(data))
+        .catch(() => {
+          document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
+        });
+    }
+
+    carregarDadosViaFetch();
+    setInterval(carregarDadosViaFetch, 60000); // Atualiza a cada 60 segundos
   </script>
+
 </body>
 </html>
