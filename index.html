@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard ESP32</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -37,6 +38,8 @@
 <body>
 
   <h1>Leituras do ESP32</h1>
+  <canvas id="grafico" width="400" height="200"></canvas>
+
 
   <table id="dados">
     <thead>
@@ -55,23 +58,68 @@
 
 <script>
   function carregarDados(dados) {
-    const tbody = document.querySelector("#dados tbody");
+  const tbody = document.querySelector("#dados tbody");
+  const labels = [];
+  const temperaturas = [];
 
-    if (!Array.isArray(dados) || dados.length === 0) {
-      document.getElementById("erro").textContent = "Nenhum dado encontrado na planilha.";
-      return;
-    }
-
-    dados.forEach(row => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${row.data || ''}</td>
-        <td>${row.temperatura || ''}</td>
-        <td>${row.umidade || ''}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+  if (!Array.isArray(dados) || dados.length === 0) {
+    document.getElementById("erro").textContent = "Nenhum dado encontrado na planilha.";
+    return;
   }
+
+  // Mostrar as últimas 100 leituras (ou menos se tiver menos)
+  const ultimos = dados.slice(-100);
+
+  ultimos.forEach(row => {
+    const dataFormatada = formatarData(row.data);
+    labels.push(dataFormatada);
+    temperaturas.push(Number(row.temperatura) || 0);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${dataFormatada}</td>
+      <td>${row.temperatura || ''}</td>
+      <td>${row.umidade || ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Criar gráfico
+  const ctx = document.getElementById('grafico').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Temperatura (°C)',
+        data: temperaturas,
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 90,
+            minRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: 10
+          }
+        },
+        y: {
+          beginAtZero: false
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+    }
+  });
+}
+
 
   const script = document.createElement('script');
     script.src = 'https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec?callback=carregarDados&_=' + new Date().getTime();
@@ -81,6 +129,8 @@
     document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
   };
   document.body.appendChild(script);
+
+  
 </script>
 
 
