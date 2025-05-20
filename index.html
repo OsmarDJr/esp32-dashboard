@@ -2,65 +2,58 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard de Temperatura e Umidade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Sensor - Gráfico Clean</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f6f8;
-      margin: 20px;
+      background: #f8f8f8;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
       color: #333;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      color: #2c3e50;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
     }
     #chart-container {
-      max-width: 450px;  /* metade de 900px */
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      max-width: 300px;
+      width: 100%;
+      height: 150px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: none;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-
-  <h1>Últimas 100 Leituras - Temperatura & Umidade</h1>
   <div id="chart-container">
-    <canvas id="sensorChart" height="400"></canvas>
+    <canvas id="sensorChart" height="150"></canvas>
   </div>
 
   <script>
-    const url = "https://script.google.com/macros/s/AKfycbwaksid1fGdcobyDrMGhBdjILayk2zmsW8tIqk-w4bAAcvws7ezlMh-CnOhojL8-bmo/exec?callback=callback";
-
-    let chart;
-
+    // Função callback para JSONP
     function callback(data) {
-      // Pega últimas 100 entradas
       const ultimos = data.slice(-100);
 
-      // Mapeia labels (datas formatadas)
       const labels = ultimos.map(item => {
         const d = new Date(item.data);
-        return d.toLocaleString('pt-BR', { hour12: false });
+        return d.toLocaleTimeString();
       });
 
-      // Valores temperatura e umidade
       const temperaturas = ultimos.map(item => parseFloat(item.temperatura));
       const umidades = ultimos.map(item => parseFloat(item.umidade));
 
-      // Se o gráfico já existe, atualiza dados, senão cria um novo
-      if (chart) {
-        chart.data.labels = labels;
-        chart.data.datasets[0].data = temperaturas;
-        chart.data.datasets[1].data = umidades;
-        chart.update();
+      const ctx = document.getElementById('sensorChart').getContext('2d');
+
+      if (window.sensorChart) {
+        window.sensorChart.data.labels = labels;
+        window.sensorChart.data.datasets[0].data = temperaturas;
+        window.sensorChart.data.datasets[1].data = umidades;
+        window.sensorChart.update();
       } else {
-        const ctx = document.getElementById('sensorChart').getContext('2d');
-        chart = new Chart(ctx, {
+        window.sensorChart = new Chart(ctx, {
           type: 'line',
           data: {
             labels: labels,
@@ -68,105 +61,69 @@
               {
                 label: 'Temperatura (°C)',
                 data: temperaturas,
-                borderColor: '#e74c3c',
-                backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                borderColor: '#ff5722',
+                backgroundColor: 'rgba(255, 87, 34, 0.2)',
                 fill: true,
-                tension: 0.3,
-                pointRadius: 3,
-                yAxisID: 'y',
+                tension: 0.2,
+                pointRadius: 0,
               },
               {
                 label: 'Umidade (%)',
                 data: umidades,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: '#2196f3',
+                backgroundColor: 'rgba(33, 150, 243, 0.2)',
                 fill: true,
-                tension: 0.3,
-                pointRadius: 3,
-                yAxisID: 'y1',
+                tension: 0.2,
+                pointRadius: 0,
               }
             ]
           },
           options: {
             responsive: true,
-            interaction: {
-              mode: 'index',
-              intersect: false,
-            },
-            stacked: false,
+            maintainAspectRatio: false,
             scales: {
-              y: {
-                type: 'linear',
-                position: 'left',
-                title: {
-                  display: true,
-                  text: 'Temperatura (°C)'
-                },
-                min: 0,
-                max: 50
-              },
-              y1: {
-                type: 'linear',
-                position: 'right',
-                title: {
-                  display: true,
-                  text: 'Umidade (%)'
-                },
-                min: 0,
-                max: 100,
-                grid: {
-                  drawOnChartArea: false,
-                },
-              },
               x: {
-                title: {
-                  display: true,
-                  text: 'Data e Hora'
-                },
-                ticks: {
-                  maxRotation: 90,
-                  minRotation: 45,
-                  maxTicksLimit: 10,
-                }
+                grid: { display: false },
+                ticks: { maxTicksLimit: 5 }
+              },
+              y: {
+                grid: { color: '#eee' },
+                ticks: { maxTicksLimit: 4 }
               }
             },
             plugins: {
               legend: {
                 labels: {
-                  font: {
-                    size: 14,
-                    weight: 'bold'
-                  }
+                  font: { size: 11 },
+                  color: '#666'
                 }
               },
               tooltip: {
+                enabled: true,
                 mode: 'nearest',
                 intersect: false,
-                callbacks: {
-                  label: ctx => {
-                    return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`;
-                  }
-                }
+                padding: 6,
               }
+            },
+            elements: {
+              line: { borderWidth: 2 },
             }
           }
         });
       }
     }
 
-    // Função para carregar dados via JSONP
-    function loadData() {
+    // Carregar dados via JSONP a cada 10 segundos
+    function carregarDados() {
       const script = document.createElement('script');
-      script.src = url + '&_=' + new Date().getTime(); // evita cache
+      script.src = 'https://script.google.com/macros/s/AKfycbwaksid1fGdcobyDrMGhBdjILayk2zmsW8tIqk-w4bAAcvws7ezlMh-CnOhojL8-bmo/exec?callback=callback&_=' + new Date().getTime();
       document.body.appendChild(script);
-      script.onload = () => {
-        document.body.removeChild(script);
-      };
+      // Remove o script para evitar acúmulo
+      script.onload = () => document.body.removeChild(script);
     }
 
-    loadData();
-    setInterval(loadData, 30 * 1000); // Atualiza a cada 30 segundos
+    carregarDados();
+    setInterval(carregarDados, 10000);
   </script>
-
 </body>
 </html>
