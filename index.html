@@ -1,47 +1,44 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard ESP32</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitoramento ESP32</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f2f5;
-      padding: 20px;
+      margin: 20px;
     }
     h1 {
-      text-align: center;
-      color: #333;
+      color: #007bff;
+    }
+    #erro {
+      color: red;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
       margin-top: 20px;
     }
     th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 8px;
+      border: 1px solid #ddd;
       text-align: center;
     }
-    th {
-      background-color: #f5f5f5;
-    }
-    .error {
-      color: red;
-      text-align: center;
-      margin-top: 20px;
+    canvas {
+      margin-top: 30px;
+      max-width: 100%;
     }
   </style>
 </head>
 <body>
-
   <h1>Leituras do ESP32</h1>
-
-  <table id="dados">
+  <p id="erro"></p>
+  <table id="tabela">
     <thead>
       <tr>
-        <th>Data</th>
+        <th>Horário</th>
         <th>Temperatura (°C)</th>
         <th>Umidade (%)</th>
       </tr>
@@ -49,35 +46,75 @@
     <tbody></tbody>
   </table>
 
-  <div class="error" id="erro"></div>
+  <canvas id="grafico"></canvas>
 
   <script>
-    function carregarDados(dados) {
-      const tbody = document.querySelector("#dados tbody");
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwdNwALkMosrp0dWLGptvnEzQkJrwWMJ_ljJcgy9ob5CekYttRxb82AAUndtQn25mLL/exec";
 
-      if (!Array.isArray(dados) || dados.length === 0) {
-        document.getElementById("erro").textContent = "Nenhum dado encontrado.";
-        return;
-      }
+    fetch(scriptURL)
+      .then(response => response.json())
+      .then(data => {
+        const tabela = document.querySelector("#tabela tbody");
+        const labels = [];
+        const temp = [];
+        const umi = [];
 
-      dados.slice(-100).forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.data || ''}</td>
-          <td>${row.temperatura || ''}</td>
-          <td>${row.umidade || ''}</td>
-        `;
-        tbody.appendChild(tr);
+        data.slice(-100).forEach((linha, index) => {
+          const horario = new Date(linha.data).toLocaleString("pt-BR", {
+            hour12: false,
+            timeZone: "America/Sao_Paulo"
+          });
+
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${horario}</td><td>${linha.temperatura}</td><td>${linha.umidade}</td>`;
+          tabela.appendChild(row);
+
+          labels.push(horario);
+          temp.push(parseFloat(linha.temperatura));
+          umi.push(parseFloat(linha.umidade));
+        });
+
+        const ctx = document.getElementById("grafico").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Temperatura (°C)",
+                data: temp,
+                borderColor: "red",
+                backgroundColor: "rgba(255, 0, 0, 0.1)",
+                fill: true
+              },
+              {
+                label: "Umidade (%)",
+                data: umi,
+                borderColor: "blue",
+                backgroundColor: "rgba(0, 0, 255, 0.1)",
+                fill: true
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: false
+              },
+              x: {
+                ticks: {
+                  autoSkip: true,
+                  maxTicksLimit: 12
+                }
+              }
+            }
+          }
+        });
+      })
+      .catch(() => {
+        document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
       });
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec?callback=carregarDados';
-    script.onerror = () => {
-      document.getElementById("erro").textContent = "Erro ao carregar dados da planilha.";
-    };
-    document.body.appendChild(script);
   </script>
-
 </body>
 </html>
