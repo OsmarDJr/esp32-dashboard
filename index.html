@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Leitura da Planilha Google</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>Dados da Planilha</h1>
+<table id="dados">
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Temperatura</th>
+      <th>Umidade</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  const sheetID = '1MfGsC1_eSI2hd1Lh8KP9o5Oi70Hi_aD5KC9Gs6uM-VQ';
+  const url = `https://spreadsheets.google.com/feeds/list/${sheetID}/1/public/values?alt=json`;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const entries = data.feed.entry;
+      const tbody = document.querySelector("#dados tbody");
+
+      entries.forEach(row => {
+        const data = row['gsx$data']?.$t || '';
+        const temperatura = row['gsx$temperatura']?.$t || '';
+        const umidade = row['gsx$umidade']?.$t || '';
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${data}</td><td>${temperatura}</td><td>${umidade}</td>`;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => {
+      console.error("Erro ao buscar dados:", error);
+    });
+</script>
+
+</body>
+</html>
