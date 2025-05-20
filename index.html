@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Leitura da Planilha Google</title>
+  <meta charset="UTF-8" />
+  <title>Leitura da Planilha via Apps Script</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
     h1 { color: #333; }
@@ -26,27 +26,25 @@
 </table>
 
 <script>
-  const sheetID = '1MfGsC1_eSI2hd1Lh8KP9o5Oi70Hi_aD5KC9Gs6uM-VQ';
-  const url = `https://spreadsheets.google.com/feeds/list/${sheetID}/1/public/values?alt=json`;
+  // URL do seu Google Apps Script Web App
+  const url = 'https://script.google.com/macros/s/AKfycbyKfZ-WpIodvj5ti2XxfsDiYlbgUNa_CSGbQ9nM9UfjWnfAMmRvIZ0_6KZRl83JM5XYjw/exec';
 
   fetch(url)
     .then(response => response.json())
     .then(data => {
-      const entries = data.feed.entry;
       const tbody = document.querySelector("#dados tbody");
-
-      entries.forEach(row => {
-        const data = row['gsx$data']?.$t || '';
-        const temperatura = row['gsx$temperatura']?.$t || '';
-        const umidade = row['gsx$umidade']?.$t || '';
-
+      data.forEach(row => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${data}</td><td>${temperatura}</td><td>${umidade}</td>`;
+        tr.innerHTML = `
+          <td>${row.data || ''}</td>
+          <td>${row.temperatura || ''}</td>
+          <td>${row.umidade || ''}</td>
+        `;
         tbody.appendChild(tr);
       });
     })
     .catch(error => {
-      console.error("Erro ao buscar dados:", error);
+      console.error("Erro ao buscar dados via Apps Script:", error);
     });
 </script>
 
