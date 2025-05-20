@@ -2,12 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard Temperatura e Umidade</title>
+  <title>Dashboard Temperatura e Umidade (Mobile)</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 15px;
       background: #fafafa;
       color: #333;
       display: flex;
@@ -17,35 +17,38 @@
     h2 {
       margin-bottom: 15px;
       font-weight: 600;
+      text-align: center;
     }
     #chartsWrapper {
       display: flex;
-      gap: 30px;
-      justify-content: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 600px;
     }
     .chartContainer {
-      width: 520px;
-      height: 325px;
+      width: 95vw;
+      height: 260px;
       background: #fff;
       border-radius: 8px;
-      padding: 15px;
+      padding: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin: 0 auto;
     }
     canvas {
       display: block;
       width: 100% !important;
       height: 100% !important;
     }
-    @media (max-width: 1100px) {
+    @media (min-width: 700px) {
       #chartsWrapper {
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        justify-content: center;
       }
       .chartContainer {
-        width: 90vw;
-        height: 300px;
-        margin-bottom: 20px;
+        width: 520px;
+        height: 325px;
+        margin: 0;
       }
     }
   </style>
@@ -82,7 +85,6 @@
       const temperaturas = ultimos.map(item => parseFloat(item.temperatura));
       const umidades = ultimos.map(item => parseFloat(item.umidade));
 
-      // Função para criar gráfico separado
       function criarGrafico(ctx, label, dados, cor) {
         return new Chart(ctx, {
           type: 'line',
@@ -130,7 +132,6 @@
         });
       }
 
-      // Destrói gráficos antigos se existirem
       if(tempChart) tempChart.destroy();
       if(humChart) humChart.destroy();
 
@@ -143,7 +144,7 @@
 
     function carregarDados() {
       const script = document.createElement('script');
-      script.src = url + '&_=' + new Date().getTime(); // evita cache
+      script.src = url + '&_=' + new Date().getTime();
       document.body.appendChild(script);
       script.onload = () => document.body.removeChild(script);
     }
