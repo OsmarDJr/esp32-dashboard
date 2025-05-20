@@ -2,20 +2,20 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard Temperatura e Umidade (Mobile)</title>
+  <title>Dashboard ESP32 - Temperatura e Umidade</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 15px;
-      background: #fafafa;
+      background: #f9f9f9;
       color: #333;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
     h2 {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       font-weight: 600;
       text-align: center;
     }
@@ -23,38 +23,38 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-      width: 100%;
-      max-width: 600px;
     }
     .chartContainer {
-      width: 95vw;
-      height: 260px;
       background: #fff;
       border-radius: 8px;
       padding: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin: 0 auto;
+      width: 320px;
+      height: 220px;
     }
     canvas {
-      display: block;
       width: 100% !important;
       height: 100% !important;
     }
-    @media (min-width: 200px) {
+    @media (min-width: 768px) {
       #chartsWrapper {
         flex-direction: row;
-        justify-content: center;
       }
       .chartContainer {
-        width: 670px;
-        height: 425px;
-        margin: 0;
+        width: 450px;
+        height: 280px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .chartContainer {
+        width: 600px;
+        height: 350px;
       }
     }
   </style>
 </head>
 <body>
-  <h2>Últimas 100 Leituras - Temperatura & Umidade</h2>
+  <h2>Últimas 100 Leituras - Temperatura e Umidade</h2>
   <div id="chartsWrapper">
     <div class="chartContainer">
       <canvas id="tempChart"></canvas>
@@ -76,10 +76,9 @@
       }
 
       const ultimos = data.slice(-100);
-
       const labels = ultimos.map(item => {
         const d = new Date(item.data);
-        return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       });
 
       const temperaturas = ultimos.map(item => parseFloat(item.temperatura));
@@ -111,7 +110,7 @@
               },
               y: {
                 grid: { color: '#eee' },
-                ticks: { maxTicksLimit: 5, color: '#666' }
+                ticks: { color: '#666' }
               }
             },
             plugins: {
@@ -122,24 +121,17 @@
                 enabled: true,
                 mode: 'nearest',
                 intersect: false,
-                padding: 6,
               }
-            },
-            elements: {
-              line: { borderWidth: 2 }
             }
           }
         });
       }
 
-      if(tempChart) tempChart.destroy();
-      if(humChart) humChart.destroy();
+      if (tempChart) tempChart.destroy();
+      if (humChart) humChart.destroy();
 
-      const tempCtx = document.getElementById('tempChart').getContext('2d');
-      const humCtx = document.getElementById('humChart').getContext('2d');
-
-      tempChart = criarGrafico(tempCtx, 'Temperatura (°C)', temperaturas, '#ff5722');
-      humChart = criarGrafico(humCtx, 'Umidade (%)', umidades, '#2196f3');
+      tempChart = criarGrafico(document.getElementById('tempChart').getContext('2d'), 'Temperatura (°C)', temperaturas, '#ff5722');
+      humChart = criarGrafico(document.getElementById('humChart').getContext('2d'), 'Umidade (%)', umidades, '#2196f3');
     }
 
     function carregarDados() {
