@@ -2,40 +2,64 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard Temperatura e Umidade</title>
+  <title>Dashboard de Temperatura e Umidade</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f8;
+      margin: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+    #chart-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body>
-  <h2>Últimas 100 leituras de Temperatura e Umidade</h2>
-  <canvas id="myChart" width="800" height="400"></canvas>
+
+  <h1>Últimas 100 Leituras - Temperatura & Umidade</h1>
+  <div id="chart-container">
+    <canvas id="sensorChart" height="400"></canvas>
+  </div>
 
   <script>
+    const url = "https://script.google.com/macros/s/AKfycbwaksid1fGdcobyDrMGhBdjILayk2zmsW8tIqk-w4bAAcvws7ezlMh-CnOhojL8-bmo/exec?callback=callback";
+
     let chart;
 
     function callback(data) {
-      // Pega só as últimas 100 leituras
+      // Pega últimas 100 entradas
       const ultimos = data.slice(-100);
 
-      // Extrai labels (datas formatadas)
+      // Mapeia labels (datas formatadas)
       const labels = ultimos.map(item => {
         const d = new Date(item.data);
-        return d.toLocaleString();
+        return d.toLocaleString('pt-BR', { hour12: false });
       });
 
-      // Extrai valores de temperatura e umidade
+      // Valores temperatura e umidade
       const temperaturas = ultimos.map(item => parseFloat(item.temperatura));
       const umidades = ultimos.map(item => parseFloat(item.umidade));
 
-      const ctx = document.getElementById('myChart').getContext('2d');
-
+      // Se o gráfico já existe, atualiza dados, senão cria um novo
       if (chart) {
-        // Atualiza dados existentes no gráfico
         chart.data.labels = labels;
         chart.data.datasets[0].data = temperaturas;
         chart.data.datasets[1].data = umidades;
         chart.update();
       } else {
-        // Cria gráfico se não existe ainda
+        const ctx = document.getElementById('sensorChart').getContext('2d');
         chart = new Chart(ctx, {
           type: 'line',
           data: {
@@ -44,17 +68,21 @@
               {
                 label: 'Temperatura (°C)',
                 data: temperaturas,
-                borderColor: 'red',
-                fill: false,
-                tension: 0.1,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
                 yAxisID: 'y',
               },
               {
                 label: 'Umidade (%)',
                 data: umidades,
-                borderColor: 'blue',
-                fill: false,
-                tension: 0.1,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
                 yAxisID: 'y1',
               }
             ]
@@ -69,30 +97,55 @@
             scales: {
               y: {
                 type: 'linear',
-                display: true,
                 position: 'left',
                 title: {
                   display: true,
                   text: 'Temperatura (°C)'
                 },
+                min: 0,
+                max: 50
               },
               y1: {
                 type: 'linear',
-                display: true,
                 position: 'right',
-                grid: {
-                  drawOnChartArea: false,
-                },
                 title: {
                   display: true,
                   text: 'Umidade (%)'
                 },
+                min: 0,
+                max: 100,
+                grid: {
+                  drawOnChartArea: false,
+                },
               },
               x: {
-                display: true,
                 title: {
                   display: true,
-                  text: 'Data/Hora'
+                  text: 'Data e Hora'
+                },
+                ticks: {
+                  maxRotation: 90,
+                  minRotation: 45,
+                  maxTicksLimit: 10,
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                }
+              },
+              tooltip: {
+                mode: 'nearest',
+                intersect: false,
+                callbacks: {
+                  label: ctx => {
+                    return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`;
+                  }
                 }
               }
             }
@@ -101,27 +154,19 @@
       }
     }
 
-    function fetchData() {
-      const url = 'https://script.google.com/macros/s/AKfycbwaksid1fGdcobyDrMGhBdjILayk2zmsW8tIqk-w4bAAcvws7ezlMh-CnOhojL8-bmo/exec?callback=callback';
-
-      // Remove o script antigo para não acumular
-      const antigo = document.getElementById('jsonp-script');
-      if (antigo) {
-        antigo.remove();
-      }
-
-      // Cria o novo script para JSONP
+    // Função para carregar dados via JSONP
+    function loadData() {
       const script = document.createElement('script');
-      script.src = url;
-      script.id = 'jsonp-script';
+      script.src = url + '&_=' + new Date().getTime(); // evita cache
       document.body.appendChild(script);
+      script.onload = () => {
+        document.body.removeChild(script);
+      };
     }
 
-    // Busca os dados e gera o gráfico ao carregar a página
-    fetchData();
-
-    // Atualiza a cada 30 segundos (30000 ms)
-    setInterval(fetchData, 30000);
+    loadData();
+    setInterval(loadData, 30 * 1000); // Atualiza a cada 30 segundos
   </script>
+
 </body>
 </html>
