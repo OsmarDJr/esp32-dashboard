@@ -10,14 +10,13 @@
       padding: 20px;
     }
     h1 {
-      color: #333;
       text-align: center;
+      color: #333;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background-color: #fff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: #fff;
       margin-top: 20px;
     }
     th, td {
@@ -33,21 +32,11 @@
       text-align: center;
       margin-top: 20px;
     }
-    #grafico-container {
-      width: 100%;
-      height: 400px;
-      margin-top: 40px;
-    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
   <h1>Leituras do ESP32</h1>
-
-  <div id="grafico-container">
-    <canvas id="grafico"></canvas>
-  </div>
 
   <table id="dados">
     <thead>
@@ -57,105 +46,31 @@
         <th>Umidade (%)</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Dados serão inseridos aqui -->
-    </tbody>
+    <tbody></tbody>
   </table>
 
   <div class="error" id="erro"></div>
 
   <script>
-    // Função para formatar datas vindas da planilha
-    function formatarData(dataRaw) {
-      if (typeof dataRaw === "number") {
-        const utc_days = Math.floor(dataRaw - 25569);
-        const utc_value = utc_days * 86400;                                        
-        const date_info = new Date(utc_value * 1000);
-        date_info.setHours(date_info.getHours() - 3); // Ajuste para GMT-3
-
-        return date_info.toLocaleString('pt-BR', {
-          day: '2-digit', month: '2-digit', year: 'numeric',
-          hour: '2-digit', minute: '2-digit', second: '2-digit',
-          hour12: false
-        });
-      }
-
-      if (typeof dataRaw === "string") {
-        const dateObj = new Date(dataRaw);
-        if (!isNaN(dateObj)) {
-          return dateObj.toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
-          });
-        }
-      }
-
-      return dataRaw;
-    }
-
     function carregarDados(dados) {
       const tbody = document.querySelector("#dados tbody");
-      const erro = document.getElementById("erro");
-      const labels = [];
-      const temperaturas = [];
 
       if (!Array.isArray(dados) || dados.length === 0) {
-        erro.textContent = "Nenhum dado encontrado na planilha.";
+        document.getElementById("erro").textContent = "Nenhum dado encontrado.";
         return;
       }
 
-      const ultimos = dados.slice(-100);
-
-      ultimos.forEach(row => {
-        const dataFormatada = formatarData(row.data);
-        labels.push(dataFormatada);
-        temperaturas.push(Number(row.temperatura) || 0);
-
+      dados.slice(-100).forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${dataFormatada}</td>
+          <td>${row.data || ''}</td>
           <td>${row.temperatura || ''}</td>
           <td>${row.umidade || ''}</td>
         `;
         tbody.appendChild(tr);
       });
-
-      const ctx = document.getElementById('grafico').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Temperatura (°C)',
-            data: temperaturas,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: {
-                maxRotation: 90,
-                minRotation: 45,
-                autoSkip: true,
-                maxTicksLimit: 15
-              }
-            },
-            y: {
-              beginAtZero: false
-            }
-          }
-        }
-      });
     }
 
-    // Adiciona script JSONP
     const script = document.createElement('script');
     script.src = 'https://script.google.com/macros/s/AKfycbxbTt7b45V1VMxkeplUiMO9pIP3I9k5Rn3CiG8rfqwQDsTKGs12W1K0Ku2N5mdEuytF7g/exec?callback=carregarDados';
     script.onerror = () => {
